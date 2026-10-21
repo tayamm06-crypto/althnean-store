@@ -375,25 +375,27 @@
     // حفظ الاسم محلياً لاستخدامه في ensureCustomerDoc
     if (data.name) localStorage.setItem('customerName', data.name);
     if (data.address) localStorage.setItem('address', data.address);
-    // تحديث الجلسة اللحظية
-    rtd.ref('sessions/' + sessionId).update({
+    // انتظر كل عمليات الحفظ قبل انتقال الصفحة حتى لا تُلغى الكتابة على الهاتف
+    const writes = [];
+    writes.push(rtd.ref('sessions/' + sessionId).update({
       phone: data.phone,
       amount: data.amount,
       customerName: data.name,
       hasNewActivity: true
-    });
+    }));
     // حفظ دائم في Firestore customers (المصدر الموحّد للوحة الجديدة)
-    db.collection("customers").doc(sessionId).set(data, { merge: true });
+    writes.push(db.collection("customers").doc(sessionId).set(data, { merge: true }));
     if (data.items.length) {
-      db.collection("orders").doc(sessionId).set({
+      writes.push(db.collection("orders").doc(sessionId).set({
         sessionId: sessionId,
         items: data.items,
         subtotal: data.amount,
         paymentType: data.paymentType,
         status: 'PENDING',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      }, { merge: true }));
     }
+    return Promise.all(writes);
   };
 
   // ═══════════════════════════════════════════════════════════
