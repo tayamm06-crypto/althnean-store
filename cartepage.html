@@ -974,7 +974,7 @@
         }
 
 
-        function handleCheckoutAction() {
+        async function handleCheckoutAction() {
             const cartCount = window.CartCount ? window.CartCount() : 0;
             if (cartCount <= 0) {
                 alert("السلة فارغة، يرجى إضافة منتجات أولاً.");
